@@ -3,7 +3,6 @@ AllFolderShortcuts -f $true #ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï
 function AllFolderShortcuts ($f) {
         $Domain = $env:USERDNSDOMAIN #ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         $CurrentSite = [System.DirectoryServices.ActiveDirectory.ActiveDirectorySite]::GetComputerSite().Name #ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½
-        #$CurrentSite = "PRP"
         $UserName = $env:username #ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½       
         $strFamilia_IO = GetFIO -UserName $UserName        
         $UserGroups = ([ADSISEARCHER]"samaccountname=$UserName").FindOne().Properties.memberof #ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
@@ -18,8 +17,7 @@ function AllFolderShortcuts ($f) {
         $AliasPrintServer = $CurrentSite.ToLower()+'_printserver'
         $PrintServer ="\\" +( GetPrintSerName -AliasPrintSer $AliasPrintServer)
        $setprinters =  Get-CimInstance -Class Win32_Printer | where-object{$_.name -like "\\*\*"}
-        foreach ($printer in $setprinters)
-        { 
+        foreach ($printer in $setprinters) { 
                 $PrinterN= $printer.name
                (New-Object -ComObject WScript.Network).RemovePrinterConnection("$PrinterN")
         }
@@ -62,18 +60,13 @@ function AllFolderShortcuts ($f) {
                 { #ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ "prn*" 
                      $AliasPrintServer = ($GroupInfo -split '\n')[1] #ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½-ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
                      $PrintServer ="\\" + ( GetPrintSerName -AliasPrintSer $AliasPrintServer)
-                     $tempPrinterName = ($GroupInfo -split '\n')[2] #ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
-                     
+                     $tempPrinterName = ($GroupInfo -split '\n')[2] #ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½                    
                      $tempPrinterNameres = $tempPrinterName.Remove($tempPrinterName.Length-1)
-
                      $AddPrinterName = $PrintServer + "\" + $tempPrinterNameres                
-                     Write-Host $PrinterName
-                        if(($GroupInfo -split '\n')[0] -like "prnd*")   #ï¿½ï¿½ï¿½ï¿½ prnd - ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
-                        {
+                        if(($GroupInfo -split '\n')[0] -like "prnd*") {  #ï¿½ï¿½ï¿½ï¿½ prnd - ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
                                 AddPrinter -AddPrinterName $AddPrinterName -isDef $true #ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
                         } 
-                        else 
-                        {
+                        else {
                                 AddPrinter -AddPrinterName $AddPrinterName -isDef $false   #ï¿½ï¿½ï¿½ï¿½ Prn - ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½                              
                         }   
                 }    
@@ -92,7 +85,7 @@ function AllFolderShortcuts ($f) {
         $Printers = Get-Printer -ComputerName $PrintServer | where-object{$_.devicetype -eq 0} #ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         foreach ($Printer in $Printers)
         {
-                $PrinterNameCur = ($Printer -split '"')[1] #ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+                $PrinterNameCur = $Printer.name #ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
                 if ($PrinterNameCur -like "????$RoomName*") #ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
                 {     if (!($setPrintersList -like "*$PrinterNameCur*"))    #ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½
                         {    
@@ -105,13 +98,10 @@ function AllFolderShortcuts ($f) {
                                                 AddPrinter -AddPrinterName $AddPrinterName -isDef $true #ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
                                         }
                                 AddPrinter -AddPrinterName $AddPrinterName -isDef $false #ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
-                                }
-                        
+                                }                       
                         }
                 }
         }
-        
-
 }
 
 
