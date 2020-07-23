@@ -23,7 +23,6 @@ function AllFolderShortcuts ($f) {
                 $PrinterN= $printer.name
                (New-Object -ComObject WScript.Network).RemovePrinterConnection("$PrinterN")
         }
-       # (New-Object -ComObject WScript.Network).RemovePrinterConnection("\\krk-s1c-001\krk-buh-202pr01")
         foreach ($Group in $UserGroups) #�������������� ��� ������ ������������
         {
             $GroupName=($Group -split ',')[0]
@@ -98,11 +97,14 @@ function AllFolderShortcuts ($f) {
                 {     if (!($setPrintersList -like "*$PrinterNameCur*"))    #������� �� ��������� �� �� ���
                         {    
                                 $AddPrinterName = $PrintServer+"\"+$PrinterNameCur #\\��� �����-�������\��� ��������
-                                if ($flag -eq $true) { #���� ��� ���� ��������� �������     
+                                if ($flag -eq $true ) { #���� ��� ���� ��������� �������     
                                  AddPrinter -AddPrinterName $AddPrinterName -isDef $false #�������� ��� �������                               
                                 }
                                 else { #���� ���������� �������� ���   
-                                 AddPrinter -AddPrinterName $AddPrinterName -isDef $true #��������� ��� ���������
+                                        if ($PrinterNameCur -like "*pr01") {
+                                                AddPrinter -AddPrinterName $AddPrinterName -isDef $true #��������� ��� ���������
+                                        }
+                                AddPrinter -AddPrinterName $AddPrinterName -isDef $false #�������� ��� �������
                                 }
                         
                         }
