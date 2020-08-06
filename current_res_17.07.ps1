@@ -1,123 +1,16 @@
-AllFolderShortcuts -f $true #пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
- 
-function AllFolderShortcuts ($f) {
-        $Domain = $env:USERDNSDOMAIN #пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
-        $CurrentSite = [System.DirectoryServices.ActiveDirectory.ActiveDirectorySite]::GetComputerSite().Name #пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
-        $UserName = $env:username #пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ       
-        $strFamilia_IO = GetFIO -UserName $UserName        
-        $UserGroups = ([ADSISEARCHER]"samaccountname=$UserName").FindOne().Properties.memberof #пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-        $GroupList =''
-        foreach ( $Group in $UserGroups ) {
-                $GroupList+=$Group #пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ string
-        } 
-        $flag = $false
-        $WSShell =New-Object -com WScript.Shell  
-        $NetHood = $WSShell.SpecialFolders.Item("Nethood")
-        Get-ChildItem *.lnk -Path $NetHood| Remove-Item -Force -Recurse
-        $AliasPrintServer = $CurrentSite.ToLower()+'_printserver'
-        $PrintServer ="\\" +( GetPrintSerName -AliasPrintSer $AliasPrintServer)
-       $setprinters =  Get-CimInstance -Class Win32_Printer | where-object{$_.name -like "\\*\*"}
-        foreach ($printer in $setprinters) { 
-                $PrinterN= $printer.name
-               (New-Object -ComObject WScript.Network).RemovePrinterConnection("$PrinterN")
-        }
-        foreach ($Group in $UserGroups) #пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-        {
-            $GroupName=($Group -split ',')[0]
-            $GroupName=$GroupName.Substring(3);
-            $GroupInfo = GetGroupInfo -Group $Group
-            if (($GroupInfo -split '\n')[0] -like "lnk*") 
-            { #пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ "lnk*"                 
-              
-                    $WSShell1 =New-Object -com WScript.Shell  
-                    $NetHood1 = $WSShell1.SpecialFolders.Item("Nethood")
-                    $DirTitle = ($GroupInfo -split '\n')[2];
-                    #пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
-                    $DirTitle = $DirTitle.Remove($DirTitle.Length-1)
-                    $DirPath = ($GroupInfo -split '\n')[1];
-                    $DirPath = $DirPath.Remove($DirPath.Length-1)
-                    $ShortcutPath1 = Join-Path -Path $NetHood1 -ChildPath " $DirTitle.lnk"
-                    $NewShortcut1 = $WSShell1.CreateShortcut($ShortcutPath1)
-                    $NewShortcut1.TargetPath = "$DirPath"
-                    $NewShortcut1.Save() #пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
-                
-                    #пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-                    if ((($GroupList -like "*krk_Users*") -and ($CurrentSite -eq "KRK")) -or (($GroupList -like "*prp_Users*") -and ($CurrentSite -eq "PRP"))) { #пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-                        MakeShortcut -PathFile "\\$Domain\dfs\KRK\docs" -strFamilia_IO $strFamilia_IO -Location "" 
-                    }
-                    elseif (($GroupList -like "*krk_Users*") -and  ($GroupList -like "*prp_Users*") ) { #пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ prp_ пїЅ krk_ 
-                        MakeShortcut -PathFile "\\$Domain\dfs\KRK\docs" -strFamilia_IO $strFamilia_IO -Location "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ" 
-                        MakeShortcut -PathFile "\\$Domain\dfs\PRP\docs" -strFamilia_IO $strFamilia_IO -Location "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ" 
-                    }
-                    elseif (($GroupList -like "*krk_Users*") -and ($CurrentSite -eq 'PRP')) { #пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-                        MakeShortcut -PathFile "\\$Domain\dfs\KRK\docs" -strFamilia_IO $strFamilia_IO -Location "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"   
-                    }
-                    elseif(($GroupList -like "*prp_Users*") -and ($CurrentSite -eq 'KRK')) { #пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-                        MakeShortcut -PathFile "\\$Domain\dfs\PRP\docs" -strFamilia_IO $strFamilia_IO -Location "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"                   
-                    }      
-                }  
-               if (($GroupInfo -split '\n')[0] -like "prn*") 
-                { #пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ "prn*" 
-                     $AliasPrintServer = ($GroupInfo -split '\n')[1] #пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-                     $PrintServer ="\\" + ( GetPrintSerName -AliasPrintSer $AliasPrintServer)
-                     $tempPrinterName = ($GroupInfo -split '\n')[2] #пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ                    
-                     $tempPrinterNameres = $tempPrinterName.Remove($tempPrinterName.Length-1)
-                     $AddPrinterName = $PrintServer + "\" + $tempPrinterNameres                
-                        if(($GroupInfo -split '\n')[0] -like "prnd*") {  #пїЅпїЅпїЅпїЅ prnd - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-                                AddPrinter -AddPrinterName $AddPrinterName -isDef $true #пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-                        } 
-                        else {
-                                AddPrinter -AddPrinterName $AddPrinterName -isDef $false   #пїЅпїЅпїЅпїЅ Prn - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ                              
-                        }   
-                }    
-                    
-        }    
-        $setPrinters = Get-CimInstance -Class Win32_Printer
-        $setPrintersList=""
-        foreach ( $print in $setPrinters ) {
-                $setPrintersList+=$print #пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ [string]
-        } 
-
-        $RoomName = (GetRoomName) #пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ  
-        $RoomName = $RoomName.toLower()     
-        $AliasPrintServer = $CurrentSite.ToLower()+'_printserver'
-        $PrintServer ="\\" +( GetPrintSerName -AliasPrintSer $AliasPrintServer) #пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-        $Printers = Get-Printer -ComputerName $PrintServer | where-object{$_.devicetype -eq 0} #пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-        foreach ($Printer in $Printers)
-        {
-                $PrinterNameCur = $Printer.name #пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-                if ($PrinterNameCur -like "????$RoomName*") #пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-                {     if (!($setPrintersList -like "*$PrinterNameCur*"))    #пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅ пїЅпїЅпїЅ
-                        {    
-                                $AddPrinterName = $PrintServer+"\"+$PrinterNameCur #\\пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅ\пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-                                if ($flag -eq $true ) { #пїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ     
-                                 AddPrinter -AddPrinterName $AddPrinterName -isDef $false #пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ                               
-                                }
-                                else { #пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ   
-                                        if ($PrinterNameCur -like "*pr01") {
-                                                AddPrinter -AddPrinterName $AddPrinterName -isDef $true #пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-                                        }
-                                AddPrinter -AddPrinterName $AddPrinterName -isDef $false #пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-                                }                       
-                        }
-                }
-        }
-}
-
-
-function  MakeShortcut { #пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ 
+function  MakeShortcut { #Создание ярлыков  
         param (
-           $PathFile, $strFamilia_IO, $Location     #пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ Location - пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ_пїЅпїЅ
+           $PathFile, $strFamilia_IO, $Location    #параметр Location - что будет написано после Фамилия_ИО
         )
         $WSShell =New-Object -com WScript.Shell  
         $NetHood = $WSShell.SpecialFolders.Item("Nethood")
-        $ShortcutPath = Join-Path -Path $NetHood -ChildPath "$strFamilia_IO $Location.lnk"
+        $ShortcutPath = Join-Path -Path $NetHood -ChildPath "Личные документы $Location.lnk"
         $NewShortcut = $WSShell.CreateShortcut($ShortcutPath)
         $NewShortcut.TargetPath = "$PathFile\$strFamilia_IO" 
         $NewShortcut.Save()        
 }
 
-function GetFIO { #пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ_пїЅпїЅ
+function GetFIO { #Получаем Фамилия_ИО
         param ($UserName)
         $UserFilter = "(&(objectCategory=User)(samAccountName=$UserName))"
         $Searcher = New-Object System.DirectoryServices.DirectorySearcher
@@ -133,10 +26,8 @@ function GetFIO { #пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ_пїЅпїЅ
         return $strFamilia_IO
 }
 
-function GetGroupInfo { #пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
-        param ($Group)
-        $GroupName=$Group.Substring(3)     
-        $GroupName=($GroupName -split ',')[0]  
+function GetGroupInfo { #Получаем заметки о группе
+        param ($GroupName)
         $Search = New-Object DirectoryServices.DirectorySearcher "LDAP://DC=VR,DC=NET"
         $GroupFilter= "(&(objectCategory=group)(cn=$GroupName))" 
         $Search.Filter = $GroupFilter
@@ -147,7 +38,7 @@ function GetGroupInfo { #пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅп
         return $GroupInfo
 }
 
-function GetPrintSerName { #пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ_printserver пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+function GetPrintSerName { #по псевдониму сайт_printserver получаем имя принт-сервера
         param($AliasPrintSer)
         $NslookupRes = (nslookup $AliasPrintSer)
         $DNSPrintSerName = $NslookupRes[3]
@@ -156,7 +47,7 @@ function GetPrintSerName { #пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ_p
         return $PrintSerName
 }
 
-function GetRoomName { #пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+function GetRoomName {#получаем имя кабинета из имени компьютера
         param()
         $ComputerName = $env:computername
         $FindPrinterName = $ComputerName.Substring(4)
@@ -164,13 +55,171 @@ function GetRoomName { #пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         return $FindPrinterName
 }
 
-function AddPrinter { #пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ. isDef- пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+function AddPrinter { #Добвление принтра. isDef- будет ли принтер дефолтным
        param($AddPrinterName, $isDef)
         $net = new-object -com wscript.network
         $net.AddWindowsPrinterConnection("$AddPrinterName")
         if ($isDef -eq $true) {
         $net.SetDefaultPrinter("$AddPrinterName") 
-        }
-        
+        }       
 }
+
+function GetGroups { #Получаем список групп пользователя, включая вложенные
+        param($UserName)
+        $Groups = ([ADSISEARCHER]"samaccountname=$UserName").FindOne().Properties.memberof #Группы, в которые входит непосредственно
+        $UserGroups =  $Groups
+        foreach ($Group in $Groups )
+        { if($null -ne $Group) 
+                {
+                        $GroupName=($Group -split ',')[0]
+                        $GroupName=$GroupName.Substring(3);
+                        $Groups2level = ([ADSISEARCHER]"samaccountname=$GroupName").FindOne().Properties.memberof  #Группы второго уровня             
+                        foreach ($Group2 in $Groups2level)
+                        {
+                                if ($null -ne $Group2) 
+                                {  
+                                        if (!($UserGroups -like "*$Group2*")) { $UserGroups+=$Group2 }               
+                                        $GroupName2=($Group2 -split ',')[0]
+                                        $GroupName2=$GroupName2.Substring(3);
+                                        $Groups3level = ([ADSISEARCHER]"samaccountname=$GroupName2").FindOne().Properties.memberof  #Группы третьего уровня 
+                                        foreach($Group3 in $Groups3level)
+                                        {
+                                        if ((!($UserGroups -like "*$Group3*")) -and ($null -ne $Groups3level)) { $UserGroups+=$Group3 }
+                                        }
+                                
+                                }                      
+                        }
+                }
+        }
+       return $UserGroups
+}
+
+        $Domain = $env:USERDNSDOMAIN #Имя домена
+        $CurrentSite = [System.DirectoryServices.ActiveDirectory.ActiveDirectorySite]::GetComputerSite().Name #Имя сайта
+        $UserName = $env:username #Имя пользователя   
+        #$CurrentSite = "PRP"   
+        $strFamilia_IO = GetFIO -UserName $UserName #Фамилия_ИО
+        $UserGroups = GetGroups -UserName $UserName #Список групп текущего пользователя
+        
+        $WSShell =New-Object -com WScript.Shell  
+        $NetHood = $WSShell.SpecialFolders.Item("Nethood")
+        Get-ChildItem *.lnk -Path $NetHood| Remove-Item -Force -Recurse #Удаляем все ярлыки
+
+        #Личные папки пользователей
+        
+           
+        $flag = $false #флаг существования дефолтного принтера
+        
+        $AliasPrintServer = $CurrentSite.ToLower()+'_printserver'
+        $PrintServer ="\\" +( GetPrintSerName -AliasPrintSer $AliasPrintServer)
+       $setprinters =  Get-CimInstance -Class Win32_Printer | where-object{$_.name -like "\\*\*"}
+        foreach ($printer in $setprinters) { 
+                $PrinterN= $printer.name
+               (New-Object -ComObject WScript.Network).RemovePrinterConnection("$PrinterN") #Удаляем все принтеры
+        }
+
+        foreach ($Group in $UserGroups)  #Простматриваем все группы пользователя
+        {
+                if($null -ne $Group) { 
+            $GroupName=($Group -split ',')[0]
+            $GroupName=$GroupName.Substring(3);
+            $GroupInfo = GetGroupInfo -GroupName $GroupName
+                if (($GroupInfo -split '\n')[0] -like "lnk*") 
+                { #Ищем группу, у которой первый парметр "lnk*"                  
+                        if(($GroupInfo -split '\n')[0] -like "lnku*") {
+                                $FoldersKRK = Get-ChildItem -Path "\\$Domain\dfs\KRK\docs" -Force
+                                $FoldersPRP = Get-ChildItem -Path "\\$Domain\dfs\PRP\docs" -Force
+                                if ((($UserGroups -like "*=krk_Users*") -and ($CurrentSite -eq "KRK")) -or (($UserGroups -like "*=prp_Users*") -and ($CurrentSite -eq "PRP"))) { #Группа и текущий сайт совпадают
+                                        
+                                        if (($CurrentSite -eq "KRK" ) -and ($FoldersKRK -like "*$strFamilia_IO*")) {
+                                        MakeShortcut -PathFile "\\$Domain\dfs\KRK\docs" -strFamilia_IO $strFamilia_IO -Location "" 
+                                        }
+                                        if (($CurrentSite -eq "PRP" ) -and ($FoldersPRP -like "*$strFamilia_IO*")) {
+                                                MakeShortcut -PathFile "\\$Domain\dfs\PRP\docs" -strFamilia_IO $strFamilia_IO -Location "" 
+                                        }
+                                }
+                                elseif (($UserGroups -like "*=krk_Users*") -and  ($UserGroups -like "*=prp_Users*") ) { #Пользователь состоит в группах prp_ и krk_  
+                                        if ($FoldersKRK -like "*$strFamilia_IO*") {
+                                        MakeShortcut -PathFile "\\$Domain\dfs\KRK\docs" -strFamilia_IO $strFamilia_IO -Location "Красноярск"  
+                                        }
+                                        if ($FoldersPRP -like "*$strFamilia_IO*") {
+                                        MakeShortcut -PathFile "\\$Domain\dfs\PRP\docs" -strFamilia_IO $strFamilia_IO -Location "Промплощадка" 
+                                        }
+                                }
+                                elseif (($UserGroups -like "*=krk_Users*") -and ($CurrentSite -eq 'PRP')) {  #Пользователь из красноярска на площадке
+                                        if ($FoldersKRK -like "*$strFamilia_IO*") {
+                                        MakeShortcut -PathFile "\\$Domain\dfs\KRK\docs" -strFamilia_IO $strFamilia_IO -Location "Красноярск"  
+                                        }
+                                }
+                                elseif(($UserGroups -like "*=prp_Users*") -and ($CurrentSite -eq 'KRK')) { #Пользователь с площадки в Красноярске
+                                        if ($FoldersPRP -like "*$strFamilia_IO*") {
+                                        MakeShortcut -PathFile "\\$Domain\dfs\PRP\docs" -strFamilia_IO $strFamilia_IO -Location "Промплощадка"                   
+                                        }
+                                }      
+                        }
+                        else{
+                                $WSShell1 =New-Object -com WScript.Shell  
+                                $NetHood1 = $WSShell1.SpecialFolders.Item("Nethood")
+                                $DirTitle = ($GroupInfo -split '\n')[2];
+                                $DirTitle = $DirTitle.Remove($DirTitle.Length-1) #Имя общей папки
+                                $DirPath = ($GroupInfo -split '\n')[1];
+                                $DirPath = $DirPath.Remove($DirPath.Length-1)
+                                $ShortcutPath1 = Join-Path -Path $NetHood1 -ChildPath " $DirTitle.lnk"
+                                $NewShortcut1 = $WSShell1.CreateShortcut($ShortcutPath1)
+                                $NewShortcut1.TargetPath = "$DirPath"
+                                $NewShortcut1.Save() #Ссылка на общую папку
+                        }
+                } 
+               if (($GroupInfo -split '\n')[0] -like "prn*") 
+                { #Ищем группу с параметром "prn*" 
+                     $AliasPrintServer = ($GroupInfo -split '\n')[1] #Имя принт-сервера из параметров
+                     $PrintServer ="\\" + ( GetPrintSerName -AliasPrintSer $AliasPrintServer)
+                     $tempPrinterName = ($GroupInfo -split '\n')[2]  #Имя принтера из параметров                    
+                     $tempPrinterNameres = $tempPrinterName.Remove($tempPrinterName.Length-1)
+                     $AddPrinterName = $PrintServer + "\" + $tempPrinterNameres                
+                        if(($GroupInfo -split '\n')[0] -like "prnd*") {   #если prnd - устанавливаем принтер дефолтным
+                                AddPrinter -AddPrinterName $AddPrinterName -isDef $true #Добавляем как дефолтный
+                                $flag = $true
+                        } 
+                        else {
+                                AddPrinter -AddPrinterName $AddPrinterName -isDef $false  #если Prn - устанавливаем как обычный                                
+                                
+                        }   
+                }   
+        }                    
+        }    
+        $setPrinters = Get-CimInstance -Class Win32_Printer
+        $setPrintersList=""
+        foreach ( $print in $setPrinters ) {
+                $setPrintersList+=$print #Список существующих принтеров [string]
+        } 
+
+        $RoomName = (GetRoomName) #Получаем имя кабинета
+        $RoomName = $RoomName.toLower()     
+        $AliasPrintServer = $CurrentSite.ToLower()+'_printserver'
+        $PrintServer ="\\" +( GetPrintSerName -AliasPrintSer $AliasPrintServer) #Получаем имя принт-сервера
+        $Printers = Get-Printer -ComputerName $PrintServer | where-object{$_.devicetype -eq 0} #Получаем список принтеров с сервера
+        foreach ($Printer in $Printers)
+        {
+                $PrinterNameCur = $Printer.name #Получаем имя текущего принтера
+                if ($PrinterNameCur -like "*$RoomName*") #Смотрим совпадает ли он с номером кабинета
+                {     if (!($setPrintersList -like "*$PrinterNameCur*"))    #Смотрим не подключен ли он уже
+                        {    
+                                $AddPrinterName = $PrintServer+"\"+$PrinterNameCur #\\имя принт-сервера\имя принтера
+                                if ($flag -eq $true ) { #если уже есть дефолтный принтер    
+                                 AddPrinter -AddPrinterName $AddPrinterName -isDef $false  #доваляем как обычный                               
+                                }
+                                else {  #если дефолтного принтера нет    
+                                        if ($PrinterNameCur -like "*pr01") {
+                                                AddPrinter -AddPrinterName $AddPrinterName -isDef $true #Добавляем как дефолтный   
+                                        }
+                                        else {
+                                        AddPrinter -AddPrinterName $AddPrinterName -isDef $false #добавляем как обычный
+                                        }
+                                }                       
+                        }
+                }
+        }
+
+
 
